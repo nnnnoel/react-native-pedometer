@@ -91,7 +91,7 @@ class PedometerModule : ReactContextBaseJavaModule, SensorEventListener {
 
     @ReactMethod
     fun isRunning(promise: Promise) {
-        promise.resolve(pref.getString("step_start", null) != null)
+        promise.resolve(PedometerService.isRunning)
     }
 
     @ReactMethod

@@ -1,6 +1,6 @@
 {
   "name": "react-native-background-pedometer",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "react native pedometer",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",
