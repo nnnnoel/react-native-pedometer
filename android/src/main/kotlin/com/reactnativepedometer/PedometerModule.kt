@@ -90,8 +90,8 @@ class PedometerModule : ReactContextBaseJavaModule, SensorEventListener {
     }
 
     @ReactMethod
-    fun isRunning(): Boolean {
-        return pref.getString("step_start", null) != null
+    fun isRunning(promise: Promise) {
+        promise.resolve(pref.getString("step_start", null) != null)
     }
 
     @ReactMethod
