@@ -2,8 +2,10 @@ import { NativeEventEmitter, NativeModules } from 'react-native';
 
 type PedometerType = {
   isSupported(): Promise<boolean>;
-  startStepCounter(start: string): any;
-  stopStepCounter(): any;
+  isRunning(): Promise<boolean>;
+  syncStepCounter(dates: string[]): Promise<Record<string, number>>;
+  startStepCounter(): void;
+  stopStepCounter(): void;
 };
 
 const { Pedometer } = NativeModules;

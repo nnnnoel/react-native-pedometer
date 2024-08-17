@@ -14,7 +14,7 @@ class Pedometer: RCTEventEmitter {
     override static func requiresMainQueueSetup() -> Bool {
         return true
     }
-
+    
     @objc(isSupported:withRejecter:)
     func isSupported(resolve: RCTPromiseResolveBlock, reject:RCTPromiseRejectBlock) -> Void {
         if CMPedometer.isStepCountingAvailable() {
@@ -22,6 +22,11 @@ class Pedometer: RCTEventEmitter {
         } else {
             resolve(false)
         }
+    }
+    
+    @objc(isRunning:withRejecter:)
+    func isRunning(resolve: RCTPromiseResolveBlock, reject:RCTPromiseRejectBlock) -> Void {
+        resolve(defaults.string( forKey: "step_start" ) != nil)
     }
 
     @objc(syncStepCounter:resolver:withRejecter:)

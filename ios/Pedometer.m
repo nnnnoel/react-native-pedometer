@@ -7,6 +7,10 @@ RCT_EXTERN_METHOD(isSupported:
                  (RCTPromiseResolveBlock)resolve
                  withRejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(isRunning:
+                  (RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(startStepCounter)
 
 RCT_EXTERN_METHOD(syncStepCounter:(NSArray)arr

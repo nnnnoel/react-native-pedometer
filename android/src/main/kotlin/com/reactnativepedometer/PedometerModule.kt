@@ -68,7 +68,7 @@ class PedometerModule : ReactContextBaseJavaModule, SensorEventListener {
 
             var editor: SharedPreferences.Editor = pref.edit()
             editor.putString("step_start", stepStart)
-            editor.commit()
+            editor.apply()
             latestSensor = -1;
         } else {
             latestSensor = 0;
@@ -90,12 +90,16 @@ class PedometerModule : ReactContextBaseJavaModule, SensorEventListener {
     }
 
     @ReactMethod
+    fun isRunning(): Boolean {
+        return pref.getString("step_start", null) != null
+    }
+
+    @ReactMethod
     fun stopStepCounter() {
         mSensorManager.unregisterListener(this)
-
-//        var editor: SharedPreferences.Editor = pref.edit()
-//        editor.clear()
-//        editor.commit()
+        val editor: SharedPreferences.Editor = pref.edit()
+        editor.remove("step_start")
+        editor.apply()
     }
 
     override fun onSensorChanged(event: SensorEvent) {
@@ -121,10 +125,13 @@ class PedometerModule : ReactContextBaseJavaModule, SensorEventListener {
         map.putInt("steps", step)
         try {
             this.mReactContext
-                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-                    .emit("StepCounter", map)
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+                .emit("StepCounter", map)
         } catch (e: RuntimeException) {
-            Log.e("ERROR", "java.lang.RuntimeException: Trying to invoke JS before CatalystInstance has been set!")
+            Log.e(
+                "ERROR",
+                "java.lang.RuntimeException: Trying to invoke JS before CatalystInstance has been set!"
+            )
         }
     }
 }
