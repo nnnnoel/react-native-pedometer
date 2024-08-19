@@ -1,7 +1,7 @@
 buildscript {
     def kotlin_version = rootProject.ext.has("kotlinVersion") ? rootProject.ext.get("kotlinVersion") : project.properties["Pedometer_kotlinVersion"]
 
-    ext.getExtOrDefault = {name ->
+    ext.getExtOrDefault = { name ->
         return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties['Pedometer_' + name]
     }
 
@@ -36,6 +36,8 @@ def getExtOrIntegerDefault(name) {
 }
 
 android {
+    namespace "com.reactnativepedometer"
+
     compileSdkVersion getExtOrIntegerDefault('compileSdkVersion')
     buildToolsVersion getExtOrDefault('buildToolsVersion')
     defaultConfig {
@@ -70,8 +72,7 @@ repositories {
 def kotlin_version = getExtOrDefault('kotlinVersion')
 
 dependencies {
-    // noinspection GradleDynamicVersion
-    api 'com.facebook.react:react-native:+'
+    api "com.facebook.react:react-android:+"
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation "androidx.preference:preference:1.2.1"
 }

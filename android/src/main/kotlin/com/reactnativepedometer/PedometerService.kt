@@ -27,14 +27,16 @@ import java.util.Date
 class PedometerService : Service(), SensorEventListener {
 
     private val CHANNEL_ID = "PEDOMETER"
+    private var mSensorManager: SensorManager =
+        getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private var pref: SharedPreferences =
+        getSharedPreferences("Pedometer", Context.MODE_PRIVATE)
     private lateinit var notification: Notification
-    private var mSensorManager: SensorManager? = null
-    private lateinit var pref: SharedPreferences
 
     private var sdf = SimpleDateFormat("yyyy-MM-dd")
 
     override fun onBind(intent: Intent?): IBinder? {
-        return null;
+        return null
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -43,8 +45,7 @@ class PedometerService : Service(), SensorEventListener {
 
         Log.i("Pedometer", "Service Create..")
 
-        this.pref = this.getSharedPreferences("Pedometer", Context.MODE_PRIVATE)
-        this.pref.getString("step_start", null) ?: return;
+        this.pref.getString("step_start", null) ?: return
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -52,21 +53,19 @@ class PedometerService : Service(), SensorEventListener {
             manager.createNotificationChannel(channel)
         }
 
-        if (mSensorManager == null) {
-            mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        }
-
         step = pref.getInt("latest_step", 0)
 
-        var mStepCounter = mSensorManager!!.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
-        mSensorManager!!.registerListener(this, mStepCounter, SensorManager.SENSOR_DELAY_FASTEST)
+        val mStepCounter = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
+        mSensorManager.registerListener(this, mStepCounter, SensorManager.SENSOR_DELAY_FASTEST)
 
-        registerReceiver(
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
                 onNotificationDismissedReceiver,
                 IntentFilter("DISMISSED_ACTION"),
                 RECEIVER_NOT_EXPORTED // This is required on Android 14
-        )
-        PedometerService.isRunning = true
+            )
+        }
+        isRunning = true
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -75,7 +74,7 @@ class PedometerService : Service(), SensorEventListener {
 
         Log.i("Pedometer", "Service onDestroy..")
 
-        PedometerService.isRunning = false
+        isRunning = false
         stopForeground(STOP_FOREGROUND_REMOVE)
         unregisterReceiver(onNotificationDismissedReceiver)
     }
@@ -100,33 +99,33 @@ class PedometerService : Service(), SensorEventListener {
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun showNotification(step: Int) {
-        if (appIcon == 0) return;
+        if (appIcon == 0) return
 
         Log.i("Pedometer", "Service showNotification..")
 
         val dismissedIntent = Intent("DISMISSED_ACTION")
         dismissedIntent.setPackage(packageName) // This is required on Android 14
         val dismissedPendingIntent = PendingIntent.getBroadcast(
-                applicationContext,
-                200,
-                dismissedIntent,
-                FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            applicationContext,
+            200,
+            dismissedIntent,
+            FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        var contents = "걸음 수 측정 중 입니다.";
+        var contents = "걸음 수 측정 중 입니다."
         if (step > 0) {
             val numberFormat = DecimalFormat("#,###")
-            contents += " (" + numberFormat.format(step) + "걸음)";
+            contents += " (${numberFormat.format(step)}걸음)"
         }
 
         notification = Notification.Builder(applicationContext, CHANNEL_ID)
-                .setContentTitle("만보기")
-                .setContentText(contents)
-                .setSmallIcon(appIcon)
-                .setOngoing(true)
-                .setDeleteIntent(dismissedPendingIntent)
-                .build()
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            .setContentTitle("만보기")
+            .setContentText(contents)
+            .setSmallIcon(appIcon)
+            .setOngoing(true)
+            .setDeleteIntent(dismissedPendingIntent)
+            .build()
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU) {
             startForeground(1, notification)
         } else {
             startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH)
@@ -136,39 +135,39 @@ class PedometerService : Service(), SensorEventListener {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onSensorChanged(event: SensorEvent) {
         val mySensor = event.sensor
-        if (mySensor.type != Sensor.TYPE_STEP_COUNTER) return;
+        if (mySensor.type != Sensor.TYPE_STEP_COUNTER) return
 
         Log.i("Pedometer", "Receive " + event.values[0].toInt())
         Log.i("Pedometer", "Last Of " + pref.getInt("latest_origin", -1))
 
-        if (event.values[0].toInt() < Math.max(pref.getInt("latest_origin", -1) - 50, 0)) {
+        if (event.values[0].toInt() < (pref.getInt("latest_origin", -1) - 50).coerceAtLeast(0)) {
             Log.i("Pedometer", "Is Reboot ??")
-            var editor = pref.edit();
+            val editor = pref.edit()
             editor.putInt("diff", -pref.getInt("latest_step", 0))
-            editor.apply();
+            editor.apply()
         }
 
-        step = event.values[0].toInt() - pref.getInt("diff", 0);
-        showNotification(step);
+        step = event.values[0].toInt() - pref.getInt("diff", 0)
+        showNotification(step)
 
-        var now = sdf.format(Date());
-        var olderDate = pref.getString("latest_date", "");
-        if (!olderDate.isNullOrEmpty() && !olderDate.equals(now)) {
+        val now = sdf.format(Date())
+        val olderDate = pref.getString("latest_date", "")
+        if (!olderDate.isNullOrEmpty() && olderDate != now) {
             Log.i("Pedometer", "Is 00:00 Over ??")
 
-            showNotification(0);
+            showNotification(0)
 
-            var editor = pref.edit();
+            val editor = pref.edit()
             editor.putInt("history_$olderDate", step)
             editor.putInt("diff", event.values[0].toInt())
-            editor.apply();
+            editor.apply()
         }
 
-        val editor = pref.edit();
+        val editor = pref.edit()
         editor.putInt("latest_origin", event.values[0].toInt())
         editor.putInt("latest_step", step)
         editor.putString("latest_date", now)
-        editor.apply();
+        editor.apply()
 
         Log.i("Pedometer", "Service onSensorChanged..$step")
 

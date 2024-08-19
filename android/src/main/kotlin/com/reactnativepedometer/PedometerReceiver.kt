@@ -12,9 +12,9 @@ class PedometerReceiver : BroadcastReceiver() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onReceive(context: Context?, intent: Intent?) {
-        if (intent == null || context == null) return;
+        if (intent == null || context == null) return
 
-        var pref = context.getSharedPreferences("Pedometer", Context.MODE_PRIVATE)
+        val pref = context.getSharedPreferences("Pedometer", Context.MODE_PRIVATE)
         if (pref.contains("step_start") && intent.action == Intent.ACTION_BOOT_COMPLETED) {
             val serviceIntent = Intent(context, PedometerService::class.java)
             serviceIntent.setAction("START_STEP_COUNTER")

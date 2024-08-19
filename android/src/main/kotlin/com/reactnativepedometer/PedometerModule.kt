@@ -21,24 +21,17 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 
-class PedometerModule : ReactContextBaseJavaModule, SensorEventListener {
+class PedometerModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(
+    reactContext
+), SensorEventListener {
 
-    private var mReactContext: ReactApplicationContext
+    private var mReactContext: ReactApplicationContext = reactContext
 
-    private var mSensorManager: SensorManager
-    private var pref: SharedPreferences
-    private var mStepCounter: Sensor?
+    private var mSensorManager: SensorManager = reactContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private var pref: SharedPreferences = reactContext.getSharedPreferences("Pedometer", Context.MODE_PRIVATE)
+    private var mStepCounter: Sensor? = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
 
-    private var latestSensor = -1;
-
-    constructor(reactContext: ReactApplicationContext) : super(reactContext) {
-        this.mReactContext = reactContext
-
-        this.pref = reactContext.getSharedPreferences("Pedometer", Context.MODE_PRIVATE)
-
-        this.mSensorManager = reactContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        this.mStepCounter = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
-    }
+    private var latestSensor = -1
 
     override fun getName(): String {
         return "Pedometer"
@@ -61,17 +54,17 @@ class PedometerModule : ReactContextBaseJavaModule, SensorEventListener {
             Log.i("Pedometer", "Service Start..")
         }
 
-        var dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        var stepStart = pref.getString("step_start", "");
+        val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        var stepStart = pref.getString("step_start", "")
         if (stepStart.isNullOrEmpty()) {
             stepStart = dateFormatter.format(Date())
 
-            var editor: SharedPreferences.Editor = pref.edit()
+            val editor: SharedPreferences.Editor = pref.edit()
             editor.putString("step_start", stepStart)
             editor.apply()
-            latestSensor = -1;
+            latestSensor = -1
         } else {
-            latestSensor = 0;
+            latestSensor = 0
         }
         Log.i("Pedometer", stepStart.toString())
         mSensorManager.registerListener(this, mStepCounter, SensorManager.SENSOR_DELAY_FASTEST)
@@ -81,9 +74,9 @@ class PedometerModule : ReactContextBaseJavaModule, SensorEventListener {
     fun syncStepCounter(targets: ReadableArray, promise: Promise) {
         val params = Arguments.createMap()
         targets.toArrayList().forEach {
-            var step = this.pref.getInt("history_" + it, -1)
+            val step = this.pref.getInt("history_" + it, -1)
             if (step > 0) {
-                params.putInt(it.toString(), step);
+                params.putInt(it.toString(), step)
             }
         }
         promise.resolve(params)
@@ -104,14 +97,14 @@ class PedometerModule : ReactContextBaseJavaModule, SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent) {
         val mySensor = event.sensor
-        if (mySensor.type !== Sensor.TYPE_STEP_COUNTER) return;
+        if (mySensor.type != Sensor.TYPE_STEP_COUNTER) return
 
-        var step = event.values[0].toInt();
+        val step = event.values[0].toInt()
         if (latestSensor == -1) {
             Log.i("Pedometer", "Diff Reset..")
-            var editor: SharedPreferences.Editor = pref.edit()
+            val editor: SharedPreferences.Editor = pref.edit()
             editor.putInt("diff", step)
-            editor.commit()
+            editor.apply()
             latestSensor = 0
         }
         sendEvent(PedometerService.step)
@@ -120,7 +113,7 @@ class PedometerModule : ReactContextBaseJavaModule, SensorEventListener {
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
     }
 
-    fun sendEvent(step: Int) {
+    private fun sendEvent(step: Int) {
         val map = Arguments.createMap()
         map.putInt("steps", step)
         try {
