@@ -27,10 +27,9 @@ import java.util.Date
 class PedometerService : Service(), SensorEventListener {
 
     private val CHANNEL_ID = "PEDOMETER"
-    private var mSensorManager: SensorManager =
-        getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    private var pref: SharedPreferences =
-        getSharedPreferences("Pedometer", Context.MODE_PRIVATE)
+
+    private lateinit var mSensorManager: SensorManager
+    private lateinit var pref: SharedPreferences
     private lateinit var notification: Notification
 
     private var sdf = SimpleDateFormat("yyyy-MM-dd")
@@ -45,7 +44,10 @@ class PedometerService : Service(), SensorEventListener {
 
         Log.i("Pedometer", "Service Create..")
 
-        this.pref.getString("step_start", null) ?: return
+        pref = getSharedPreferences("Pedometer", Context.MODE_PRIVATE)
+        pref.getString("step_start", null) ?: return
+
+        mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
